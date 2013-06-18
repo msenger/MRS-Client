@@ -94,7 +94,7 @@ sub as_string {
     $r .= "blastable\n" if $self->{blastable};
     $r .= "Aliases: " . join (", ", @{ $self->aliases } ) . "\n" if $self->aliases;
     $r .= "Files:\n\t" . join ("\n\t", map { my $file = $_; $file =~ s/\n/\n\t/g; $file } @{ $self->files } ) . "\n";
-#    $r .= "Indices:\n\t" . join ("\n\t", @{ $self->indices } ) . "\n";
+    $r .= "Indices:\n\t" . join ("\n\t", @{ $self->indices } ) . "\n";
     return $r;
 }
 
@@ -119,6 +119,14 @@ sub _populate_info {
 	    my $fileSize = 0;
             foreach my $info (@{ $answer->{parameters}->{info} }) {
                 foreach my $key (keys %$info) {
+		    if ($key eq 'indices') {
+			# special dealing with indices
+			$self->{indices} = [] unless exists $self->{indices};
+			foreach my $ind (@{ $info->{$key} }) {
+			    push (@{ $self->{indices} }, MRS::Client::Databank::Index->new (%$ind, db => $info->{id}));
+			}
+			next;
+		    }
 		    if ($is_alias) {
 			# deal with numeric fields
 			if ($key eq 'entries') {
@@ -127,8 +135,10 @@ sub _populate_info {
 			    $rawDataSize += $info->{$key};
 			} elsif ($key eq 'fileSize') {
 			    $fileSize += $info->{$key};
+
 			} elsif ($key eq 'aliases' or $key eq 'id') {
-			    # ignore aliases and ID when dealing with an alias
+			    # ...and ignore aliases and ID when dealing with an alias
+
 			} else {
 			    # ...and concatenate those string fields that are differnt
 			    if (exists $self->{$key} and $self->{$key} ne $info->{$key}) {
@@ -180,16 +190,19 @@ sub _populate_indices {
     my $self = shift;
     return $self if $self->{indices_retrieved};
 
-    $self->{client}->_create_proxy ('search');
-    my $answer = $self->{client}->_call (
-        $self->{client}->{search_proxy}, 'GetIndices',
-        { db => $self->{id} });
-    # print Dumper ($answer);
-    $self->{indices_retrieved} = 1;
-    if (defined $answer) {
-        $self->{indices} =
-            [ map { MRS::Client::Databank::Index->new (%$_) }
-              @{ $answer->{parameters}->{indices} } ];
+    if ($self->{client}->is_v6) {
+	$self->_populate_info();
+    } else {
+	$self->{client}->_create_proxy ('search');
+	my $answer = $self->{client}->_call (
+	    $self->{client}->{search_proxy}, 'GetIndices',
+	    { db => $self->{id} });
+	$self->{indices_retrieved} = 1;
+	if (defined $answer) {
+	    $self->{indices} =
+		[ map { MRS::Client::Databank::Index->new (%$_, db => $self->id) }
+		  @{ $answer->{parameters}->{indices} } ];
+	}
     }
     return $self;
 }
@@ -385,6 +398,7 @@ sub new {
     return $self;
 }
 
+sub db          { return (shift->{db} or ''); }
 sub id          { return shift->{id}; }
 sub description { return shift->{description}; }
 sub count       { return shift->{count} }
@@ -394,8 +408,8 @@ use overload q("") => "as_string";
 sub as_string {
     my $self = shift;
     return sprintf (
-        "%-15s%9d  %-9s %s",
-        $self->id, $self->count, $self->type, $self->description);
+        "%-15s%-15s%9d  %-9s %s",
+        $self->db, $self->id, $self->count, $self->type, $self->description);
 }
 
 1;

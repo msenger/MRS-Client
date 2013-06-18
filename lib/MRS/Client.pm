@@ -422,7 +422,7 @@ __END__
     # ...or let the client talk to your own MRS servers
     my $client = MRS::Client->new ( search_url  => 'http://localhost:18081/',
                                     blast_url   => 'http://localhost:18082/',;
-                                    clustal_url => 'http://localhost:18083/');
+                                    clustal_url => 'http://localhost:18083/');  # this only for MRS 5
 
     # ...or specify only a host, assuming the default ports are used
     my $client = MRS::Client->new ( host => 'localhost');
@@ -680,28 +680,24 @@ accepts a single argument, a databank ID:
    print $client->db ('enzyme');
 
    Id:      enzyme
-   Version: Tue Jun 13 21:29:00 2006
-   Count:   4645
+   Name:    Enzyme
+   Version: 2013-05-27
+   Count:   6115
    URL:     http://ca.expasy.org/enzyme/
    Parser:  enzyme
    Files:
-           Version:       Tue Jun 13 21:29:00 2006
-           Modified:      2010-01-31 22:39:37
-           Entries count: 4645
-           Raw data size: 3235666
-           File size:     10857715
-           Unique Id:     fe2a908e-5ecd-4f72-9d27-e1ef7bccc3af
+           Version:       2013-05-27
+           Modified:      2013-05-27 11:46 GMT
+           Entries count: 6115
+           Raw data size: 7436504
+           File size:     45563041
+           Unique Id:     fc0540bd-58a2-4de7-b3ff-6daff64ca13c
    Indices:
-           __ALL_TEXT__   164412  FullText  __ALL_TEXT__
-           an               4534  FullText  Alternate Name
-           ca               4594  FullText  Catalytic Activity
-           cc               8184  FullText  Comments
-           cf                 66  FullText  CoFactor
-           de               3341  FullText  Description
-           di                574  FullText  Disease
-           dr             145912  FullText  Database Reference
-           id               4645  Unique    Identification
-           pr                418  FullText  Prosite Reference
+           enzyme         text               14881  Unique    
+           enzyme         de                  3650  Unique    Description
+           enzyme         dr                420832  Unique    Database Reference
+           enzyme         id                  6114  Unique    Identification
+           enzyme         pr                   398  Unique    Prosite Reference
 
 You can find out what databanks IDs are available by:
 
@@ -791,7 +787,7 @@ is created by a factory method available in the C<MRS::Client>:
 The factory method, as well as the I<new> method, creates only a
 "shell" databank instance - that is good enough for making queries but
 which does not contain any databank properties (name, indices,
-etc.). The properties will be fetched from the MRS server only when
+etc.) yet. The properties will be fetched from the MRS server only when
 you ask for them (using the "getters" method described below).
 
 =head3 new
@@ -803,6 +799,9 @@ The only, and mandatory, parameter is I<id>:
 The arguments syntax (the hash) is prepared for more arguments later
 (perhaps). But it should not bother you because you would rarely use
 this method - having the factory method I<db> in the client.
+
+I<Recommendation:> Do not use this method directly, or check first how
+it is used in the module C<MRS::Client>.
 
 =head3 find
 
@@ -1148,7 +1147,8 @@ instances. Each such instance has properties reachable by the
 
    my $db_indices = $client->db('uniprot')->indices;
    foreach my $idx (@{ $db_indices }) {
-      printf ("%-15s%9d  %-9s %s\n",
+      printf ("%-15s%-15s%9d  %-9s %s\n",
+              $idx->db,
               $idx->id,
               $idx->count,
               $idx->type,
@@ -1741,6 +1741,20 @@ algorithms; it uses always the B<Vector> algorithm.
 The MRS 6 server does not provide multiple sequence alignment
 service. All remarks about ClustalW in this document are, therefore,
 valid only for the MRS 5.
+
+=head3 aliases
+
+The MRS 6 brings a new concept: I<aliases>. An alias is a set of
+databases, usually closely related. A typical example is an alias
+C<uniprot> that combines together two databases, the C<sprot>
+(SwissProt) and C<trembl> (TrEMBL). You can use an alias in all places
+where so far only database IDs were possible.
+
+However, the list of databases (returned by the C<$client->db()>
+method) does not include the aliases. In order to get a list of
+aliases, there is a new method:
+
+   $client->aliases();
 
 =head1 MISSING FEATURES, CAVEATS, BUGS
 

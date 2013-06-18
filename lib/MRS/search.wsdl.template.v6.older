@@ -56,7 +56,6 @@
             <xsd:element name="entries" type="xsd:unsignedInt" minOccurs="1" maxOccurs="1"/>
             <xsd:element name="fileSize" type="xsd:unsignedLong" minOccurs="1" maxOccurs="1"/>
             <xsd:element name="rawDataSize" type="xsd:unsignedLong" minOccurs="1" maxOccurs="1"/>
-            <xsd:element name="indices" type="ns:Index" minOccurs="0" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>
     <xsd:element name="Find">
@@ -145,6 +144,20 @@
         <xsd:complexType>
             <xsd:sequence>
                 <xsd:element name="entry" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="GetIndices">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="db" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="GetIndicesResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="indices" type="ns:Index" minOccurs="0" maxOccurs="unbounded"/>
             </xsd:sequence>
         </xsd:complexType>
     </xsd:element>
@@ -255,6 +268,12 @@
 <wsdl:message name="GetEntryResponseMessage">
     <wsdl:part name="parameters" element="ns:GetEntryResponse"/>
 </wsdl:message>
+<wsdl:message name="GetIndicesRequestMessage">
+    <wsdl:part name="parameters" element="ns:GetIndices"/>
+</wsdl:message>
+<wsdl:message name="GetIndicesResponseMessage">
+    <wsdl:part name="parameters" element="ns:GetIndicesResponse"/>
+</wsdl:message>
 <wsdl:message name="GetLinkedExRequestMessage">
     <wsdl:part name="parameters" element="ns:GetLinkedEx"/>
 </wsdl:message>
@@ -290,6 +309,10 @@
     <wsdl:operation name="GetMetaData">
         <wsdl:input message="ns:GetMetaDataRequestMessage"/>
         <wsdl:output message="ns:GetMetaDataResponseMessage"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetIndices">
+        <wsdl:input message="ns:GetIndicesRequestMessage"/>
+        <wsdl:output message="ns:GetIndicesResponseMessage"/>
     </wsdl:operation>
     <wsdl:operation name="Find">
         <wsdl:input message="ns:FindRequestMessage"/>
@@ -347,6 +370,15 @@
         </wsdl:output>
     </wsdl:operation>
     <wsdl:operation name="GetMetaData">
+        <soap:operation soapAction="" style="document"/>
+        <wsdl:input>
+            <soap:body use="literal"/>
+        </wsdl:input>
+        <wsdl:output>
+            <soap:body use="literal"/>
+        </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetIndices">
         <soap:operation soapAction="" style="document"/>
         <wsdl:input>
             <soap:body use="literal"/>
