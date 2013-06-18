@@ -83,9 +83,10 @@ sub aliases     { return shift->_populate_count->{aliases}; }
 use overload q("") => "as_string";
 sub as_string {
     my $self = shift;
+    $self->_populate_info();
     my $r = '';
     $r .= "Id:      " . $self->{id}   . "\n";
-    $r .= "Name:    " . $self->{name} . "\n" if $self->{name};
+    $r .= "Name:    " . $self->name . "\n" if $self->{name};
     $r .= "Version: " . $self->version  . "\n";
     $r .= "Count:   " . $self->count  . "\n";
     $r .= "URL:     " . $self->{url}  . "\n" if $self->{url};
@@ -93,7 +94,7 @@ sub as_string {
     $r .= "blastable\n" if $self->{blastable};
     $r .= "Aliases: " . join (", ", @{ $self->aliases } ) . "\n" if $self->aliases;
     $r .= "Files:\n\t" . join ("\n\t", map { my $file = $_; $file =~ s/\n/\n\t/g; $file } @{ $self->files } ) . "\n";
-    $r .= "Indices:\n\t" . join ("\n\t", @{ $self->indices } ) . "\n";
+#    $r .= "Indices:\n\t" . join ("\n\t", @{ $self->indices } ) . "\n";
     return $r;
 }
 
@@ -112,12 +113,42 @@ sub _populate_info {
             $self->{client}->{search_proxy}, 'GetDatabankInfo',
             { db => $self->{id} });
         if (defined $answer) {
-            # print Dumper ($answer);
+	    my $is_alias = ( @{ $answer->{parameters}->{info} } > 1 );
+	    my $entries = 0;
+	    my $rawDataSize = 0;
+	    my $fileSize = 0;
             foreach my $info (@{ $answer->{parameters}->{info} }) {
                 foreach my $key (keys %$info) {
-                    $self->{$key} = $info->{$key};
+		    if ($is_alias) {
+			# deal with numeric fields
+			if ($key eq 'entries') {
+			    $entries += $info->{$key};
+			} elsif ($key eq 'rawDataSize') {
+			    $rawDataSize += $info->{$key};
+			} elsif ($key eq 'fileSize') {
+			    $fileSize += $info->{$key};
+			} elsif ($key eq 'aliases' or $key eq 'id') {
+			    # ignore aliases and ID when dealing with an alias
+			} else {
+			    # ...and concatenate those string fields that are differnt
+			    if (exists $self->{$key} and $self->{$key} ne $info->{$key}) {
+				$self->{$key} .= ", $info->{$key}";
+			    } else {
+				$self->{$key} = $info->{$key};
+			    }
+			}
+
+		    } else {
+			# this databank is NOT an alias
+			$self->{$key} = $info->{$key};
+		    }
                 }
             }
+	    if ($is_alias) {
+		$self->{entries} = $entries;
+		$self->{rawDataSize} = $rawDataSize;
+		$self->{fileSize} = $fileSize;
+	    }
         }
         $self->{info_retrieved} = 1;
     }
@@ -176,9 +207,10 @@ sub _populate_count {
         return $self;
     }
 
-    # if ($self->{client}->is_v6) {
-    #     $self->{count} = $self->{entries};
-    # } else {
+    if ($self->{client}->is_v6) {
+	$self->_populate_info();
+	$self->{count} = $self->{entries};
+    } else {
         $self->{client}->_create_proxy ('search');
         my $answer = $self->{client}->_call (
             $self->{client}->{search_proxy}, 'Count',
@@ -190,7 +222,7 @@ sub _populate_count {
         } else {
             $self->{count} = 0;
         }
-    # }
+    }
     return $self;
 }
 

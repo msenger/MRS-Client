@@ -156,15 +156,19 @@ if (defined $opt_L) {
 
 # entry counts of all databanks
 if (defined $opt_C) {
-    my $total = 0;
-    say join ("\n", map { $total += $_->count; sprintf ("%-15s %9d  %s", $_->id, $_->count, $_->version); } $client->db);
-    # say "Total: $total";
+    say join ("\n", map { sprintf ("%-15s %9d  %s", $_->id, $_->count, $_->version); } $client->db);
 }
 
 # info about a single database
 if ( $opt_d and @ARGV == 0 and not ($opt_a or $opt_o or $opt_q or $opt_i) ) {
     if ($opt_c) {
-        say $client->db ($opt_d)->count;
+	if ($opt_d eq 'all') {
+	    my $total = 0;
+	    map { $total += $_->count; } $client->db;
+	    say "$total";
+	} else {
+	    say $client->db ($opt_d)->count;
+	}
     } else {
         say $client->db ($opt_d);
     }

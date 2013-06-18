@@ -293,7 +293,7 @@ sub _call {
 
 #-----------------------------------------------------------------
 # Factory method for creating one or more databanks:
-#   it returns an array of MRS::Client::Databank if $db is undef or empty
+#   it returns an array of MRS::Client::Databank if $db is undef or empty or 'all'
 #   else it returns a databank indicated by $db (which is an Id)
 #-----------------------------------------------------------------
 sub db {
