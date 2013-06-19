@@ -39,6 +39,7 @@ where 'options' are:
    -l             list of all available databanks IDs
    -L             list of all available databanks details
    -C             list entry counts of all databanks
+   -y             list of all available databank aliases
 
    -d <databank>  info about a databank,
                   or a databank that will be searched
@@ -86,7 +87,7 @@ use vars qw/ $opt_h $opt_v /;                       # general
 use vars qw/ $opt_e $opt_S $opt_E $opt_H $opt_X/;   # endpoints
 use vars qw/ $opt_a $opt_o $opt_q $opt_f $opt_A /;  # query
 use vars qw/ $opt_p $opt_m $opt_n $opt_s /;
-use vars qw/ $opt_d $opt_l $opt_L $opt_C $opt_c /;  # databanks
+use vars qw/ $opt_d $opt_l $opt_L $opt_C $opt_c $opt_y/;  # databanks
 use vars qw/ $opt_i $opt_x/;
 use vars qw/ $opt_V $opt_D/;
 my $switches = 'aAdefHimoqsSVxX';   # switches taking an argument
@@ -144,9 +145,21 @@ if (defined $opt_E) {
     }
 }
 
-# list of databanks IDs
-if (defined $opt_l) {
-    say join ("\n", map { $_->id } $client->db);
+# list of databanks IDs and/or aliases
+if (defined $opt_l or defined $opt_y) {
+    my @dbs = $client->db;
+    say join ("\n", map { $_->id } @dbs) if $opt_l;
+    if ($opt_y) {
+        my $all_aliases = {};
+        foreach my $db (@dbs) {
+            my $aliases = $db->aliases || [];
+            foreach my $alias (@$aliases) {
+                $all_aliases->{$alias} = 1;
+            }
+        }
+        say join ("\n", sort keys %$all_aliases)
+            if keys $all_aliases;
+    }
 }
 
 # list of databanks details (info)
@@ -162,13 +175,13 @@ if (defined $opt_C) {
 # info about a single database
 if ( $opt_d and @ARGV == 0 and not ($opt_a or $opt_o or $opt_q or $opt_i) ) {
     if ($opt_c) {
-	if ($opt_d eq 'all') {
-	    my $total = 0;
-	    map { $total += $_->count; } $client->db;
-	    say "$total";
-	} else {
-	    say $client->db ($opt_d)->count;
-	}
+        if ($opt_d eq 'all') {
+            my $total = 0;
+            map { $total += $_->count; } $client->db;
+            say "$total";
+        } else {
+            say $client->db ($opt_d)->count;
+        }
     } else {
         say $client->db ($opt_d);
     }

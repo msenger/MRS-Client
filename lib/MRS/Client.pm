@@ -620,7 +620,7 @@ for a shortcut):
 
     my $client = MRS::Client->new ( search_url  => 'http://localhost:18081/',
                                     blast_url   => 'http://localhost:18082/',
-                                    clustal_url => 'http://localhost:18083/',
+                                    clustal_url => 'http://localhost:18083/',   # this only for MRS 5
                                    );
 
 Technical detail: These URLs will be used in the location field of the
@@ -693,7 +693,7 @@ accepts a single argument, a databank ID:
            File size:     45563041
            Unique Id:     fc0540bd-58a2-4de7-b3ff-6daff64ca13c
    Indices:
-           enzyme         text               14881  Unique    
+           enzyme         text               14881  Unique
            enzyme         de                  3650  Unique    Description
            enzyme         dr                420832  Unique    Database Reference
            enzyme         id                  6114  Unique    Identification
@@ -788,7 +788,7 @@ The factory method, as well as the I<new> method, creates only a
 "shell" databank instance - that is good enough for making queries but
 which does not contain any databank properties (name, indices,
 etc.) yet. The properties will be fetched from the MRS server only when
-you ask for them (using the "getters" method described below).
+you ask for them (using the "getter" methods described below).
 
 =head3 new
 
@@ -951,7 +951,8 @@ quotes; just a minor annoyance).
 
 This argument (C<eXtended format>) enhances the C<format> argument. It
 is used (at least at the moment) only for HTML format; for other
-formats, it is ignored.
+formats, it is ignored. See, however, the L</"MRS VERSIONS"> about the
+abandoned HTML format.
 
 Be aware, however, that the C<xformat> depends on the structure of the
 HTML provided by the MRS. This structure is not defined in the MRS
@@ -1105,7 +1106,7 @@ extended format, and it returns the given entry:
 The optional C<extended format> is a hashref and it was explained
 earlier in the section about the C<find()> method.
 
-=head3 id, name, version, blastable, url, script, files, indices
+=head3 id, name, version, blastable, url, script, files, indices, aliases
 
 There are several methods delivering databank properties. They have no
 arguments:
@@ -1117,6 +1118,7 @@ arguments:
    print $db->blastable . "\n";
    print $db->url       . "\n";
    print $db->script    . "\n";
+   print $db->aliases   . "\n";
 
 =head3 files
 
@@ -1750,11 +1752,11 @@ C<uniprot> that combines together two databases, the C<sprot>
 (SwissProt) and C<trembl> (TrEMBL). You can use an alias in all places
 where so far only database IDs were possible.
 
-However, the list of databases (returned by the C<$client->db()>
-method) does not include the aliases. In order to get a list of
-aliases, there is a new method:
+However, the list of databases returned by the "db()" method does not
+include the aliases. You need to ask individual databases for their
+aliases:
 
-   $client->aliases();
+   $client->db('sprot')->aliases();
 
 =head1 MISSING FEATURES, CAVEATS, BUGS
 

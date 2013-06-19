@@ -1,6 +1,8 @@
-2013-06-04  Martin Senger  <martin.senger&#64;gmail.com>
+2013-06-19  Martin Senger  <martin.senger&#64;gmail.com>
 
 	* Released version 1.0.0
+
+2013-06-04  Martin Senger  <martin.senger&#64;gmail.com>
 
 	* Fixes for MRS version 6 (see details in the docs by perldoc).
 

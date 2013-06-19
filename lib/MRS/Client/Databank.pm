@@ -74,7 +74,7 @@ sub version {
 }
 
 # returns a meaningful result (an arrayref) only from MRS 6 and above
-sub aliases     { return shift->_populate_count->{aliases}; }
+sub aliases     { return shift->_populate_info->{aliases}; }
 
 #-----------------------------------------------------------------
 # Mostly for debugging - because it may be expensive: It calls several
@@ -113,52 +113,52 @@ sub _populate_info {
             $self->{client}->{search_proxy}, 'GetDatabankInfo',
             { db => $self->{id} });
         if (defined $answer) {
-	    my $is_alias = ( @{ $answer->{parameters}->{info} } > 1 );
-	    my $entries = 0;
-	    my $rawDataSize = 0;
-	    my $fileSize = 0;
+            my $is_alias = ( @{ $answer->{parameters}->{info} } > 1 );
+            my $entries = 0;
+            my $rawDataSize = 0;
+            my $fileSize = 0;
             foreach my $info (@{ $answer->{parameters}->{info} }) {
                 foreach my $key (keys %$info) {
-		    if ($key eq 'indices') {
-			# special dealing with indices
-			$self->{indices} = [] unless exists $self->{indices};
-			foreach my $ind (@{ $info->{$key} }) {
-			    push (@{ $self->{indices} }, MRS::Client::Databank::Index->new (%$ind, db => $info->{id}));
-			}
-			next;
-		    }
-		    if ($is_alias) {
-			# deal with numeric fields
-			if ($key eq 'entries') {
-			    $entries += $info->{$key};
-			} elsif ($key eq 'rawDataSize') {
-			    $rawDataSize += $info->{$key};
-			} elsif ($key eq 'fileSize') {
-			    $fileSize += $info->{$key};
+                    if ($key eq 'indices') {
+                        # special dealing with indices
+                        $self->{indices} = [] unless exists $self->{indices};
+                        foreach my $ind (@{ $info->{$key} }) {
+                            push (@{ $self->{indices} }, MRS::Client::Databank::Index->new (%$ind, db => $info->{id}));
+                        }
+                        next;
+                    }
+                    if ($is_alias) {
+                        # deal with numeric fields
+                        if ($key eq 'entries') {
+                            $entries += $info->{$key};
+                        } elsif ($key eq 'rawDataSize') {
+                            $rawDataSize += $info->{$key};
+                        } elsif ($key eq 'fileSize') {
+                            $fileSize += $info->{$key};
 
-			} elsif ($key eq 'aliases' or $key eq 'id') {
-			    # ...and ignore aliases and ID when dealing with an alias
+                        } elsif ($key eq 'aliases' or $key eq 'id') {
+                            # ...and ignore aliases and ID when dealing with an alias
 
-			} else {
-			    # ...and concatenate those string fields that are differnt
-			    if (exists $self->{$key} and $self->{$key} ne $info->{$key}) {
-				$self->{$key} .= ", $info->{$key}";
-			    } else {
-				$self->{$key} = $info->{$key};
-			    }
-			}
+                        } else {
+                            # ...and concatenate those string fields that are differnt
+                            if (exists $self->{$key} and $self->{$key} ne $info->{$key}) {
+                                $self->{$key} .= ", $info->{$key}";
+                            } else {
+                                $self->{$key} = $info->{$key};
+                            }
+                        }
 
-		    } else {
-			# this databank is NOT an alias
-			$self->{$key} = $info->{$key};
-		    }
+                    } else {
+                        # this databank is NOT an alias
+                        $self->{$key} = $info->{$key};
+                    }
                 }
             }
-	    if ($is_alias) {
-		$self->{entries} = $entries;
-		$self->{rawDataSize} = $rawDataSize;
-		$self->{fileSize} = $fileSize;
-	    }
+            if ($is_alias) {
+                $self->{entries} = $entries;
+                $self->{rawDataSize} = $rawDataSize;
+                $self->{fileSize} = $fileSize;
+            }
         }
         $self->{info_retrieved} = 1;
     }
@@ -191,18 +191,18 @@ sub _populate_indices {
     return $self if $self->{indices_retrieved};
 
     if ($self->{client}->is_v6) {
-	$self->_populate_info();
+        $self->_populate_info();
     } else {
-	$self->{client}->_create_proxy ('search');
-	my $answer = $self->{client}->_call (
-	    $self->{client}->{search_proxy}, 'GetIndices',
-	    { db => $self->{id} });
-	$self->{indices_retrieved} = 1;
-	if (defined $answer) {
-	    $self->{indices} =
-		[ map { MRS::Client::Databank::Index->new (%$_, db => $self->id) }
-		  @{ $answer->{parameters}->{indices} } ];
-	}
+        $self->{client}->_create_proxy ('search');
+        my $answer = $self->{client}->_call (
+            $self->{client}->{search_proxy}, 'GetIndices',
+            { db => $self->{id} });
+        $self->{indices_retrieved} = 1;
+        if (defined $answer) {
+            $self->{indices} =
+                [ map { MRS::Client::Databank::Index->new (%$_, db => $self->id) }
+                  @{ $answer->{parameters}->{indices} } ];
+        }
     }
     return $self;
 }
@@ -221,8 +221,8 @@ sub _populate_count {
     }
 
     if ($self->{client}->is_v6) {
-	$self->_populate_info();
-	$self->{count} = $self->{entries};
+        $self->_populate_info();
+        $self->{count} = $self->{entries};
     } else {
         $self->{client}->_create_proxy ('search');
         my $answer = $self->{client}->_call (
